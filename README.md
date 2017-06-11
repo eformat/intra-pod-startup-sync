@@ -4,7 +4,7 @@ example uses sidecar container for git sync - https://github.com/kubernetes/git-
 
 creates an nginx container with content from GIT_SYNC_REPO
 
-better approach than mounting a github repo to a volume
+an alternate approach is to mount a github repo to a volume (no sync, credentials harder)
 
 ```
 oc volume rc --all --add --name=v1 \
