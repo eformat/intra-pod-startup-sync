@@ -1,0 +1,76 @@
+apiVersion: v1
+kind: DeploymentConfig
+metadata:
+  creationTimestamp: null
+  generation: 1
+  name: intra-pod-startup
+spec:
+  replicas: 1
+  selector:
+    deployment-config.name: intra-pod-startup
+  strategy:
+    activeDeadlineSeconds: 21600
+    resources: {}
+    rollingParams:
+      intervalSeconds: 1
+      maxSurge: 25%
+      maxUnavailable: 25%
+      timeoutSeconds: 600
+      updatePeriodSeconds: 1
+    type: Rolling
+  template:  
+    metadata:
+      name: intra-pod-startup
+      creationTimestamp: null
+      labels:
+        deployment-config.name: intra-pod-startup
+    spec:
+      containers:
+      - name: nginx
+        image: eformat/nginx-from-git
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          protocol: TCP    
+        command:
+        - /start.sh
+        volumeMounts:
+        - name: content
+          mountPath: /usr/share/nginx/html
+          readOnly: true
+        - name: cache
+          mountPath: /var/cache/nginx
+        - name: run
+          mountPath: /var/run
+      - name: git-sync
+        image: gcr.io/google_containers/git-sync:v2.0.4
+        volumeMounts:
+        - name: content
+          mountPath: /var/tmp/
+        env:
+        - name: GIT_SYNC_REPO
+          value: https://github.com/eformat/semat-web
+        - name: GIT_SYNC_ROOT
+          value: /var/tmp
+        - name: GIT_SYNC_DEST
+          value: data
+        - name: GIT_SYNC_ONE_TIME
+          value: "false"
+        - name: GIT_SYNC_DEPTH
+          value: "1"
+        - name: GIT_SYNC_WAIT
+          value: "30"
+      volumes:
+      - name: content
+      - name: cache
+        emptyDir: {}
+      - name: run
+        emptyDir: {}
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+  test: false
+  triggers:
+  - type: ConfigChange
+status: {}

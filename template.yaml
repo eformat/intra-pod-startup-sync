@@ -1,0 +1,121 @@
+apiVersion: v1
+kind: Template
+metadata:
+  creationTimestamp: null
+  name: intra-pod-startup-sync
+objects:
+- apiVersion: v1
+  kind: DeploymentConfig
+  metadata:
+    creationTimestamp: null
+    generation: 1
+    name: intra-pod-startup
+  spec:
+    replicas: 1
+    selector:
+      deployment-config.name: intra-pod-startup
+    strategy:
+      activeDeadlineSeconds: 21600
+      resources: {}
+      rollingParams:
+        intervalSeconds: 1
+        maxSurge: 25%
+        maxUnavailable: 25%
+        timeoutSeconds: 600
+        updatePeriodSeconds: 1
+      type: Rolling
+    template:
+      metadata:
+        creationTimestamp: null
+        labels:
+          deployment-config.name: intra-pod-startup
+        name: intra-pod-startup
+      spec:
+        containers:
+        - command:
+          - /start.sh
+          image: eformat/nginx-from-git
+          imagePullPolicy: Always
+          name: nginx
+          ports:
+          - containerPort: 8080
+            protocol: TCP
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /usr/share/nginx/html
+            name: content
+            readOnly: true
+          - mountPath: /var/cache/nginx
+            name: cache
+          - mountPath: /var/run
+            name: run
+        - env:
+          - name: GIT_SYNC_REPO
+            value: https://github.com/eformat/semat-web
+          - name: GIT_SYNC_ROOT
+            value: /var/tmp/git
+          - name: GIT_SYNC_DEST
+            value: data
+          - name: GIT_SYNC_ONE_TIME
+            value: "false"
+          - name: GIT_SYNC_DEPTH
+            value: "0"
+          - name: GIT_SYNC_WAIT
+            value: "30"
+          image: gcr.io/google_containers/git-sync:v2.0.4
+          imagePullPolicy: IfNotPresent
+          name: git-sync
+          resources: {}
+          terminationMessagePath: /dev/termination-log
+          volumeMounts:
+          - mountPath: /var/tmp/git
+            name: content
+        dnsPolicy: ClusterFirst
+        restartPolicy: Always
+        securityContext: {}
+        terminationGracePeriodSeconds: 30
+        volumes:
+        - emptyDir: {}
+          name: content
+        - emptyDir: {}
+          name: cache
+        - emptyDir: {}
+          name: run
+    test: false
+    triggers:
+    - type: ConfigChange
+  status: {}
+- apiVersion: v1
+  kind: Service
+  metadata:
+    creationTimestamp: null
+    name: intra-pod-startup
+  spec:
+    ports:
+    - name: default
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+    selector:
+      deployment-config.name: intra-pod-startup
+    sessionAffinity: None
+    type: ClusterIP
+  status:
+    loadBalancer: {}
+- apiVersion: v1
+  kind: Route
+  metadata:
+    annotations:
+      openshift.io/host.generated: "true"
+    creationTimestamp: null
+    name: intra-pod-startup
+  spec:
+    port:
+      targetPort: default
+    to:
+      kind: Service
+      name: intra-pod-startup
+      weight: 100
+    wildcardPolicy: None
+  status: {}
