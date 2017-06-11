@@ -1,6 +1,6 @@
 # intra-pod-startup-sync
 
-uses sidecar container for git sync - https://github.com/kubernetes/git-sync
+example uses sidecar container for git sync - https://github.com/kubernetes/git-sync
 
 creates an nginx container with content from GIT_SYNC_REPO
 
@@ -15,3 +15,20 @@ oc volume rc --all --add --name=v1 \
 ```
 
 git-sync support credentials and incremental sync based on delay GIT_SYNC_WAIT
+
+## build nginx docker image
+
+```
+cd nginx-from-git
+docker build . -t nginx-from-git --no-cache
+docker tag nginx-from-git docker.io/eformat/nginx-from-git
+docker push docker.io/eformat/nginx-from-git
+```
+
+## run pod
+
+```
+oc create -f pod.yaml
+oc expose po/intra-pod-startup --port=8080 --generator=service/v1
+oc expose svc intra-pod-startup
+```
