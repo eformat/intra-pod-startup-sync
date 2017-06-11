@@ -1,6 +1,6 @@
 #!/bin/sh
 
-DATA=/usr/share/nginx/html/kubernetes
+DATA=/usr/share/nginx/html/data
 
 while [ ! -d ${DATA} ]; do
     echo "waiting for ${DATA}"
@@ -8,4 +8,4 @@ while [ ! -d ${DATA} ]; do
 done
 echo "found ${DATA}"
 
-exec nginx -g "daemon off;"
+exec nginx -c /nginx.conf -g "daemon off;"
