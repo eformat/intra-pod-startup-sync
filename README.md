@@ -32,3 +32,13 @@ oc create -f pod.yaml
 oc expose po/intra-pod-startup --port=8080 --generator=service/v1
 oc expose svc intra-pod-startup
 ```
+
+## template
+
+```
+oc process -f template.yaml | oc create -f -
+```
+
+## todo
+add health checks
+shared pv ? how does sync work. perhaps not.
