@@ -1,6 +1,6 @@
 # intra-pod-startup-sync
 
-example uses sidecar container for git sync - https://github.com/kubernetes/git-sync
+OpenShift example using a sidecar container for git syncing a repo - https://github.com/kubernetes/git-sync
 
 creates an nginx container with content from GIT_SYNC_REPO
 
